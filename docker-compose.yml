@@ -1,22 +1,21 @@
-master:
+redis:
   image: redis:latest
-  command: redis-server --port 16479
+  command: redis-server --port 16479 --appendonly yes
+  restart: on-failure
+  volumes:
+    - "/var/www/redis/data:/data"
   ports:
     - "16479:16479"
-slave:
-  image: redis:latest
-  command: redis-server --port 16579 --slaveof redis-master 16479
-  links:
-    - master:redis-master
-  ports:
-    - "16579:16579"
+
 sentinel:
   build: sentinel
   environment:
+    - SENTINEL_MASTER_IP=ip
+    - SENTINEL_MASTER_PORT=port
     - SENTINEL_DOWN_AFTER=5000
     - SENTINEL_FAILOVER=5000    
   links:
-    - master:redis-master
-    - slave
+    - redis
+  restart: on-failure 
   ports:
     - "26379:26379"
